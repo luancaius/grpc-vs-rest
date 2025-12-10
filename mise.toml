@@ -1,0 +1,40 @@
+[tools]
+python = "3.12"
+
+[tasks.install]
+description = "Install Python dependencies"
+run = "pip install -r requirements.txt"
+
+[tasks.generate]
+description = "Generate gRPC and Proto code"
+run = "python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. app/proto/service.proto"
+depends = ["install"]
+
+[tasks.setup]
+description = "Setup environment (install deps + generate protos)"
+depends = ["generate"]
+
+[tasks.server]
+description = "Start both REST and gRPC servers"
+run = "python server_main.py --type both"
+depends = ["setup"]
+
+[tasks.rest]
+description = "Start REST server only"
+run = "python server_main.py --type rest"
+depends = ["setup"]
+
+[tasks.grpc]
+description = "Start gRPC server only"
+run = "python server_main.py --type grpc"
+depends = ["setup"]
+
+[tasks."benchmark:rest"]
+description = "Run REST benchmark"
+run = "python client_main.py --type rest --size {{arg(name='size', default='1024')}} --iterations {{arg(name='iter', default='100')}}"
+depends = ["setup"]
+
+[tasks."benchmark:grpc"]
+description = "Run gRPC benchmark"
+run = "python client_main.py --type grpc --size {{arg(name='size', default='1024')}} --iterations {{arg(name='iter', default='100')}}"
+depends = ["setup"]
